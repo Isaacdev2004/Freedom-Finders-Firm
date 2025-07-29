@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: google-business-scraper
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.16
+      - key: ZAPIER_WEBHOOK_URL
+        value: https://webhook.site/your-unique-url
+        sync: false 
