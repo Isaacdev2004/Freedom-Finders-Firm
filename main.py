@@ -21,12 +21,13 @@ ZAPIER_WEBHOOK_URL = os.getenv('ZAPIER_WEBHOOK_URL', 'https://webhook.site/your-
 @app.route('/extract', methods=['POST'])
 def extract_business_data():
     """
-    Extract Google Business listing data and send to Zapier webhook
+    Extract Google Business listing data and send to return webhook
     
     Expected JSON payload:
     {
         "business_name": "Freedom Finders Firm",
-        "website_url": "https://freedomfindersfirm.com"  # optional
+        "website_url": "https://freedomfindersfirm.com",  # optional
+        "return_webhook_url": "https://hooks.zapier.com/xyz"  # optional
     }
     """
     try:
@@ -41,6 +42,7 @@ def extract_business_data():
         # Extract business name or URL
         business_name = data.get('business_name', '')
         website_url = data.get('website_url', '')
+        return_webhook_url = data.get('return_webhook_url', '')
         
         if not business_name and not website_url:
             return jsonify({
@@ -57,8 +59,11 @@ def extract_business_data():
         if 'error' in result:
             return jsonify(result), 404
         
-        # Send data to Zapier webhook (mock for now)
-        webhook_result = send_to_zapier(result)
+        # Send data to return webhook if provided, otherwise use default
+        if return_webhook_url:
+            webhook_result = send_to_webhook(result, return_webhook_url)
+        else:
+            webhook_result = send_to_zapier(result)
         
         # Add webhook status to response
         result['webhook_status'] = webhook_result
@@ -91,7 +96,8 @@ def root():
             "content_type": "application/json",
             "example_payload": {
                 "business_name": "Freedom Finders Firm",
-                "website_url": "https://freedomfindersfirm.com"
+                "website_url": "https://freedomfindersfirm.com",
+                "return_webhook_url": "https://hooks.zapier.com/xyz"
             }
         },
         "endpoints": {
@@ -100,6 +106,45 @@ def root():
             "/": "This help message"
         }
     }), 200
+
+def send_to_webhook(data, webhook_url):
+    """Send extracted data to specified webhook URL"""
+    try:
+        # Send the business data directly to the webhook
+        response = requests.post(
+            webhook_url,
+            json=data,
+            headers={'Content-Type': 'application/json'},
+            timeout=10
+        )
+        
+        if response.status_code in [200, 201, 202]:
+            return {
+                "status": "success",
+                "message": f"Data sent to return webhook successfully",
+                "webhook_url": webhook_url,
+                "webhook_response": response.text
+            }
+        else:
+            return {
+                "status": "error",
+                "message": f"Return webhook request failed with status {response.status_code}",
+                "webhook_url": webhook_url,
+                "webhook_response": response.text
+            }
+            
+    except requests.exceptions.RequestException as e:
+        return {
+            "status": "error",
+            "message": f"Failed to send to return webhook: {str(e)}",
+            "webhook_url": webhook_url
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Unexpected error sending to return webhook: {str(e)}",
+            "webhook_url": webhook_url
+        }
 
 def send_to_zapier(data):
     """Send extracted data to Zapier webhook"""

@@ -81,6 +81,15 @@ OR
 }
 ```
 
+OR (for Zapier integration):
+
+```json
+{
+  "business_name": "Freedom Finders Firm",
+  "return_webhook_url": "https://hooks.zapier.com/your-return-webhook"
+}
+```
+
 **Response Example**:
 ```json
 {
