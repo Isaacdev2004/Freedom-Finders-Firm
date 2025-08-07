@@ -1,5 +1,50 @@
 # Deployment Guide
 
+## 🚀 **Quick Render Deployment for Zapier Integration**
+
+### **Step 1: Deploy to Render**
+1. **Go to [render.com](https://render.com)** and create account
+2. **Click "New +" → "Web Service"**
+3. **Connect GitHub**: Select `Isaacdev2004/Freedom-Finders-Firm`
+4. **Configure**:
+   - **Name**: `google-business-scraper` (or your choice)
+   - **Build Command**: `pip install -r requirements_alternative.txt`
+   - **Start Command**: `gunicorn main:app`
+5. **Click "Create Web Service"**
+6. **Wait for deployment** (2-3 minutes)
+7. **Copy your live URL**: `https://your-app-name.onrender.com`
+
+### **Step 2: Test Your Live API**
+```bash
+# Test health endpoint
+curl https://your-app-name.onrender.com/health
+
+# Test with return webhook
+curl -X POST https://your-app-name.onrender.com/extract \
+  -H "Content-Type: application/json" \
+  -d '{
+    "business_name": "Freedom Finders Firm",
+    "return_webhook_url": "https://hooks.zapier.com/your-test-webhook"
+  }'
+```
+
+### **Step 3: Set Up Your Zapier Zap**
+1. **Create new Zap** in Zapier
+2. **Trigger**: Wix form submission
+3. **Action**: HTTP POST
+   - **URL**: `https://your-app-name.onrender.com/extract`
+   - **Payload**:
+   ```json
+   {
+     "business_name": "{{business_name_from_wix}}",
+     "return_webhook_url": "https://hooks.zapier.com/your-return-webhook"
+   }
+   ```
+4. **Create return webhook** in another Zap to receive scraped data
+
+## 🔄 **Complete Flow**
+1. **Wix Form** → **Zapier** → **Your App** → **Scrape Data** → **Send Back to Zapier**
+
 ## Render Deployment
 
 ### Issue: lxml Compilation Error
